@@ -103,7 +103,8 @@ class HTMLParser:
       if nodes:
         for node in nodes:
           resDict = callback( node )
-          partlyData.append( resDict )
+          if resDict:
+            partlyData.append( resDict )
         i = 0
         while i < len( partlyData ):
           if not res_datas:
@@ -205,20 +206,25 @@ class Spider( object ):
   def post( self , url , data ):
     self.__downloader.post( url , data )
 
-def downloadImg( node ):
-  if "src" in node:
-    return node["src"]
-  return None
+def downloadImg( root , node ):
+  try:
+    if node["src"][:4] != "http":
+      return None
+    return {
+      "src": urlparse.urljoin( root , node["src"] )
+      }
+  except Exception as e:
+    return None
 
 if __name__  == "__main__":
-  root_url = "https://baike.baidu.com"
-  maxCount = 200
+  root_url = "https://image.baidu.com/search/index?tn=baiduimage&ipn=r&ct=201326592&cl=2&lm=-1&st=-1&fm=index&fr=&hs=0&xthttps=111111&sf=1&fmq=&pv=&ic=0&nc=1&z=&se=1&showtab=0&fb=0&width=&height=&face=0&istype=2&ie=utf-8&word=%E5%BC%A0%E5%AD%A6%E5%8F%8B&oq=%E5%BC%A0%E5%AD%A6%E5%8F%8B&rsp=-1"
+  maxCount = 10
   objSpider = Spider()
   dataRegDict = {
     r"title": lambda node: {
       "title": node.get_text()
     },
-    r"img": downloadImg
+    r"img": lambda node: downloadImg( root_url , node )
   }
   outputFormat = {
     "title": "<p>%s</p>",
